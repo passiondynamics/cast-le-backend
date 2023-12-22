@@ -5,39 +5,39 @@
 ### Download
 
 ```bash
-$ git clone git@github.com:passiondynamics/cast-le.git
-$ cd cast-le/
+git clone git@github.com:passiondynamics/cast-le.git
+cd cast-le/
 ```
 
 ### Virtual environment
 
-Entering(/creating) the virtual env:
+Enter(/create) the virtual env:
 ```bash
-$ pipenv shell
+pipenv shell
 ```
 
-Installing dependencies:
+Install all dependencies listed in `Pipfile.lock`:
 ```bash
-$ pipenv sync --dev
+pipenv sync --dev
 ```
 
 Add a new dependency:
 ```bash
-$ pipenv install {package}
+pipenv install {package}
 ```
 
 ### Unit tests
 
-(make sure you're in the virtual env)
+(make sure you're in the virtual env and at the top level of the repo)
 
-Only run unit tests themselves:
+Run unit tests:
 ```bash
-$ pytest tests/unit
+pytest tests/unit
 ```
 
 Run unit tests with coverage information:
 ```bash
-$ pytest --cov=src tests/unit
+pytest --cov=src tests/unit
 ```
 
 ### Integration tests
