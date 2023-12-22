@@ -8,6 +8,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          sparse-checkout: |
+            Pipfile
+            Pipfile.lock
+            src/
+            tests/
           persist-credentials: false
       - name: Set up Python
         uses: actions/setup-python@v5
