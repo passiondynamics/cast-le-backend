@@ -16,4 +16,4 @@ jobs:
           python-version: '3.12'
           cache: 'pipenv'
       - name: Test main.py
-        runs: python main.py
+        run: python main.py
