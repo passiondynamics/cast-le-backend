@@ -28,4 +28,16 @@ $ pipenv install {package}
 
 ### Unit tests
 
+(make sure you're in the virtual env)
+
+Only run unit tests themselves:
+```bash
+$ pytest tests/unit
+```
+
+Run unit tests with coverage information:
+```bash
+$ pytest --cov=src tests/unit
+```
+
 ### Integration tests
