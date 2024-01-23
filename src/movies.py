@@ -14,7 +14,7 @@ def popular_movies():
 
     # use the api url and headers to get the information on the popular movies
     response = requests.get(url, headers=headers)
-    print(response.text)
+    print(response.status_code)
 
 def toprated_movies():
     # number of pages of top rated movies to get there are 20 results on each page
@@ -30,4 +30,4 @@ def toprated_movies():
 
     # use the api url and headers to get the information on the popular movies
     response = requests.get(url, headers=headers)
-    print(response.text)
+    print(response.status_code)
