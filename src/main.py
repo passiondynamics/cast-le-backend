@@ -1,3 +1,5 @@
+from movies import *
+
 def hello():
     return 'Hello world!'
 
