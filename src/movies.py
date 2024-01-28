@@ -1,33 +1,174 @@
 import requests
+import json
 
-def popular_movies():
-    # number of pages of popular movies to get there are 20 results on each page
-    pages = 1
+
+def popular_movies(pages, headers):
+    """
+        This function calls the TMDB API for the popular movies list
+    
+        :param pages: int - number of pages of top rated movies to get there are 20 results on each page
+        :param headers: json - api authorization header
+        :return: json return the api response of popular movies
+    """
+    
     # api endpoint
     url = "https://api.themoviedb.org/3/movie/popular?language=en-US&page={}&region=US".format(pages)
 
-    # api header for authorization
-    headers = {
-        "accept": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5ZWNhNjRiOGE1ZGM4OWZlNTNmNzQ5Y2I4MDAwMGIxMSIsInN1YiI6IjY1YjAwMWJhNjdiNjEzMDBlYjUzODA2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.B5tu8C5pXbVtxrfR0aPJgqLu0povlRhuf1a8T7sWDjk"
-    }
-
     # use the api url and headers to get the information on the popular movies
     response = requests.get(url, headers=headers)
-    print(response.status_code)
+    return response.json()
 
-def toprated_movies():
-    # number of pages of top rated movies to get there are 20 results on each page
-    pages = 1
+
+def toprated_movies(pages, headers):
+
+    """
+        This function calls the TMDB API for the top rated movies list
+    
+        :param pages: int - number of pages of top rated movies to get there are 20 results on each page
+        :param headers: json - api authorization header
+        :return: json return the api response of top rated movies
+    """
+    
     # api endpoint
     url = "https://api.themoviedb.org/3/movie/top_rated?language=en-US&page={}&region=US".format(pages)
 
-    # api header for authorization
-    headers = {
-        "accept": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5ZWNhNjRiOGE1ZGM4OWZlNTNmNzQ5Y2I4MDAwMGIxMSIsInN1YiI6IjY1YjAwMWJhNjdiNjEzMDBlYjUzODA2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.B5tu8C5pXbVtxrfR0aPJgqLu0povlRhuf1a8T7sWDjk"
-    }
-
     # use the api url and headers to get the information on the popular movies
     response = requests.get(url, headers=headers)
-    print(response.status_code)
+    return response.json()
+
+
+def extract_movie_data(movies):
+    """
+        Take the movie id and title out of the API results
+
+        :param movies: json - a json of movie data
+        :return: json return only the extracted data from the movies should be just the ids and the title
+    """
+
+    # extract ID and Title
+    extracted_data = [
+        {"id": movie.get("id"), "title": movie.get("title")}
+        for movie in movies.get("results", [])
+        if 16 not in movie.get("genre_ids", [])
+    ]
+    
+    return {"movies": extracted_data}
+
+
+def actors(movies, headers):
+    """
+        This function gets the actors from a given movie and then calls the popular_actors function to get the most popular ones
+
+        :param movies: json - a json of movie data
+        :param headers: json - api authorization header
+        :return: json return the movies json after adding the most popular actors to each movie
+    """
+    
+    # run an api call on each movie and get the cast, after that call popular_actors to get the most popular actors and add them to the json
+    for movie in movies.get("movies", []):
+        movie_id = movie.get("id")
+        # api endpoint
+        url = "https://api.themoviedb.org/3/movie/{}/credits?language=en-US".format(movie_id)
+        # use the api url and headers to get the cast
+        response = requests.get(url, headers=headers)
+        most_popular_actors = popular_actors(response.json())
+
+        # Update the existing movie data with actor ids
+        movie["actors"] = most_popular_actors
+
+    return movies
+
+
+def popular_actors(cast):
+    """
+        This is a helper function that gets the most popular actors from a given movie cast.
+
+        :param cast: json - the cast of a certain movie as well as data on the actors one entry looks like this 
+        "cast": [
+            {
+            "adult": false,
+            "gender": 2,
+            "id": 504,
+            "known_for_department": "Acting",
+            "name": "Tim Robbins",
+            "original_name": "Tim Robbins",
+            "popularity": 32.809,
+            "profile_path": "/A4fHNLX73EQs78f2G6ObfKZnvp4.jpg",
+            "cast_id": 3,
+            "character": "Andy Dufresne",
+            "credit_id": "52fe4231c3a36847f800b131",
+            "order": 0
+            }
+        ]
+        
+        :return: json - return the ids of the most popular actors
+    """
+    # sort the cast list based on popularity in descending order
+    sorted_cast = sorted(cast["cast"], key=lambda x: x["popularity"], reverse=True)
+
+    # top x actors in terms of popularity
+    number_of_actors = 4
+
+    # get the ids of the top 4 actors
+    most_popular_actors = [actor["id"] for actor in sorted_cast[:number_of_actors]]
+    return most_popular_actors
+
+
+def actor_images(movies, headers):
+    """
+        This function gets the actors images from the api
+
+        :param movies: json - a json of movie data
+        :param headers: json - api authorization header
+        :return: json the updated movies json with pictures of the actors 
+    """
+    for movie in movies.get("movies", []):
+        actor_ids = movie.get("actors", [])
+        for actor_id in actor_ids:
+
+            # api endpoint for getting actor images
+            url = "https://api.themoviedb.org/3/person/{}/images".format(actor_id)
+            response = requests.get(url, headers=headers)
+            images = response.json().get("profiles", [])
+
+            # Get the 1920x1080 image if available, otherwise use the first available image
+            if images:
+                image_url = next((img["file_path"] for img in images if img["width"] == 1920 and img["height"] == 1080), images[0]["file_path"])
+                actor_images[actor_id] = image_url
+
+            movie["actor_images"] = images # note for testing make sure this adds to actor_images and does not overwrite actor images
+    
+    return movies
+
+
+def related_movies(movies, headers):
+    """
+        This function gets the related movies to the movies in our json this is to consider answers that will have the same 4 actors in a sequel
+
+        :param movies: json - a json of movie data
+        :param headers: json - api authorization header
+        :return: json the movies json with the related movies added
+    """
+
+    movie_set = None
+
+    for movie in movies.get("movies", []):
+        actor_ids = movie.get("actors", [])
+        for actor_id in actor_ids:
+            # api endpoint
+            actor_url = "https://api.themoviedb.org/3/person/{}/movie_credits?language=en-US".format(actor_id)
+            actor_response = requests.get(actor_url, headers=headers)
+            actor_movies = actor_response.json().get("cast", [])
+    
+            # create a set of the movies and then find the intersection of those sets
+            if movie_set is None:
+                movie_set = set(m["title"] for m in actor_movies)
+            else:
+                temp_set = set(m["title"] for m in actor_movies)
+                movie_set = set.intersection(movie_set, temp_set)
+
+        # add the alternative answers to the movie json
+        movie["alternative_answers"] = movie_set
+
+
+    return movies
