@@ -30,3 +30,19 @@ jobs:
           pipenv sync --dev
       - name: Run unit tests
         run: pipenv run pytest --cov=src tests/unit/
+      - name: Build artifact
+        run: |
+            mkdir package/
+            ls -Ahl
+            pipenv graph
+            pipenv requirements > requirements.txt
+            ls -Ahl
+            cat requirements.txt
+            pipenv lock -r > requirements.txt
+            ls -Ahl
+            cat requirements.txt
+            # pipenv run pip install -t package/ -r requirements.txt
+            zip artifact.zip src/
+            ls -Ahl
+            rm -r package/
+            ls -Ahl
